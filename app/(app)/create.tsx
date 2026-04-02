@@ -1,15 +1,20 @@
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Colors } from '../../src/constants/colors';
 
 export default function CreatePage() {
+
+  const {t}= useTranslation();
+
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create</Text>
-      <Text style={styles.subtitle}>Paste an idea, transcript, or rough draft.</Text>
+      <Text style={styles.title}>{t("create.title")}</Text>
+      <Text style={styles.subtitle}>{t('create.subtitle')}</Text>
 
       <TextInput
         multiline
-        placeholder="Write your raw content here..."
+        placeholder={t('create.placeholder')}
         placeholderTextColor={Colors.muted}
         style={styles.input}
       />

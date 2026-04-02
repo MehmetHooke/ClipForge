@@ -1,14 +1,18 @@
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../../src/constants/colors';
 
 export default function ProjectsPage() {
+
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Projects</Text>
-      <Text style={styles.subtitle}>Your saved projects will appear here.</Text>
+      <Text style={styles.title}>{t('projects.title')}</Text>
+      <Text style={styles.subtitle}>{t('projects.subtitle')}</Text>
 
       <View style={styles.emptyCard}>
-        <Text style={styles.emptyText}>No projects yet.</Text>
+        <Text style={styles.emptyText}>{t('projects.empty')}</Text>
       </View>
     </View>
   );

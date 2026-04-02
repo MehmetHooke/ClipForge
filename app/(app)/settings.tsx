@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../../src/constants/colors';
 import { useAuth } from '../../src/store/auth.context';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   function handleLogout() {
     logout();
@@ -13,19 +15,19 @@ export default function SettingsPage() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
-      <Text style={styles.subtitle}>Manage your account</Text>
+      <Text style={styles.title}>{t('settings.title')}</Text>
+      <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Name</Text>
+        <Text style={styles.label}>{t('common.name')}</Text>
         <Text style={styles.value}>{user?.name}</Text>
 
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>{t('common.email')}</Text>
         <Text style={styles.value}>{user?.email}</Text>
       </View>
 
       <Pressable style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Logout</Text>
+        <Text style={styles.buttonText}>{t('common.logout')}</Text>
       </Pressable>
     </View>
   );

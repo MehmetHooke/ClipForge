@@ -1,21 +1,23 @@
 import { Link } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../../src/constants/colors';
 import { useAuth } from '../../src/store/auth.context';
 
 export default function HomePage() {
+  const {t} = useTranslation();
   const { user } = useAuth();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome, {user?.name}</Text>
-      <Text style={styles.subtitle}>Your creator workspace is ready.</Text>
+      <Text style={styles.title}>{t('home.welcome')}, {user?.name}</Text>
+      <Text style={styles.subtitle}>{t('home.workspaceReady')}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Quick actions</Text>
-        <Link href="/create" style={styles.link}>Create new project</Link>
-        <Link href="/projects" style={styles.link}>View projects</Link>
-        <Link href="/settings" style={styles.link}>Settings</Link>
+        <Text style={styles.cardTitle}>{t('home.quickActions')}</Text>
+        <Link href="/create" style={styles.link}>{t('home.newProject')}</Link>
+        <Link href="/projects" style={styles.link}>{t('home.viewProjects')}</Link>
+        <Link href="/settings" style={styles.link}>{t('common.settings')}</Link>
       </View>
     </View>
   );

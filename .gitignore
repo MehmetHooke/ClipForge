@@ -17,7 +17,7 @@ clip-forge-backend/.env
 *.p12
 *.key
 *.mobileprovision
-
+.env
 # Metro
 .metro-health-check*
 

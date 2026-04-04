@@ -6,6 +6,9 @@ import { buildPrompt } from "./prompt.service";
 export async function generateContent(input: GenerateRequest) {
   const prompt = buildPrompt(input);
 
+  console.log("--- PROMPT SENT TO GEMINI ---");
+  console.log(prompt);
+
   const res = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
     {
@@ -29,6 +32,9 @@ export async function generateContent(input: GenerateRequest) {
 
   const data = await res.json();
 
+  console.log("--- RAW GEMINI RESPONSE ---");
+  console.log(JSON.stringify(data, null, 2));
+
   if (!res.ok) {
     throw new AppError(
       data?.error?.message || "Gemini request failed",
@@ -39,15 +45,29 @@ export async function generateContent(input: GenerateRequest) {
 
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
+  console.log("--- GEMINI TEXT ---");
+  console.log(text);
+
   if (!text) {
     throw new AppError("Gemini boş cevap döndü", "AI_EMPTY_RESPONSE", 500);
   }
 
   try {
     const parsed = JSON.parse(text);
-    return outputSchema.parse(parsed);
+
+    console.log("--- PARSED GEMINI JSON ---");
+    console.log(JSON.stringify(parsed, null, 2));
+
+    const validated = outputSchema.parse(parsed);
+
+    console.log("--- VALIDATED OUTPUT ---");
+    console.log(JSON.stringify(validated, null, 2));
+
+    return validated;
   } catch (error) {
-    console.error("RAW GEMINI TEXT:", text);
-    throw new AppError("Gemini JSON parse edilemedi", "AI_PARSE_ERROR", 500);
+    console.log("--- PARSE / VALIDATION ERROR ---");
+    console.log(error);
+
+    throw new AppError("Gemini cevabı parse edilemedi", "AI_PARSE_ERROR", 500);
   }
 }

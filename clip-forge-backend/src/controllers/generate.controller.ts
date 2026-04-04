@@ -7,13 +7,19 @@ import { AppError } from "../utils/appError";
 
 export async function generateController(req: Request, res: Response) {
   try {
-    // 1. Validation
+    console.log("--- /api/generate REQUEST BODY ---");
+    console.log(JSON.stringify(req.body, null, 2));
+
     const parsed = generateRequestSchema.parse(req.body);
 
-    // 2. AI call
+    console.log("--- PARSED REQUEST ---");
+    console.log(JSON.stringify(parsed, null, 2));
+
     const result = await generateContent(parsed);
 
-    // 3. Success response
+    console.log("--- FINAL RESULT TO FRONTEND ---");
+    console.log(JSON.stringify(result, null, 2));
+
     return res.status(200).json(
       successResponse({
         id: randomUUID(),
@@ -22,21 +28,31 @@ export async function generateController(req: Request, res: Response) {
       }),
     );
   } catch (error: any) {
-    // 🔴 Zod validation error
     if (error.name === "ZodError") {
+      console.log("--- ZOD VALIDATION ERROR ---");
+      console.log(JSON.stringify(error.issues, null, 2));
+
       return res
         .status(400)
         .json(errorResponse("Invalid request data", "VALIDATION_ERROR"));
     }
 
-    // 🔴 Custom AppError
     if (error instanceof AppError) {
+      console.log("--- APP ERROR ---");
+      console.log({
+        message: error.message,
+        code: error.code,
+        status: error.status,
+      });
+
       return res
         .status(error.status)
         .json(errorResponse(error.message, error.code));
     }
 
-    // 🔴 AI / unknown error
+    console.log("--- UNKNOWN ERROR ---");
+    console.log(error);
+
     return res
       .status(500)
       .json(

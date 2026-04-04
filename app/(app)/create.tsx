@@ -10,30 +10,33 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../../src/constants/colors';
-import { PLATFORM_OPTIONS, TONE_OPTIONS, TRANSFORM_OPTIONS } from '../../src/constants/options';
-import { generateMockOutputs } from '../../src/services/generator/mockGenerator.service';
+import {
+  PLATFORM_OPTIONS,
+  TONE_OPTIONS,
+  TRANSFORM_OPTIONS,
+} from '../../src/constants/options';
+import { generateContent } from '../../src/services/api/generate';
 import { useProject } from '../../src/store/project.context';
 import {
-  PlatformTarget,
-  ProjectDraft,
+  GenerateRequest,
+  PlatformType,
   ToneType,
   TransformType,
-} from '../../src/types/project';
+} from '../../src/types/generate';
 
 export default function CreatePage() {
   const { t } = useTranslation();
-  const { setCurrentDraft, setGeneratedOutputs } = useProject();
+  const { setCurrentDraft, addGeneratedOutput } = useProject();
 
   const [title, setTitle] = useState('');
   const [rawInput, setRawInput] = useState('');
-  const [platformTarget, setPlatformTarget] =
-    useState<PlatformTarget>('youtube_shorts');
-  const [transformType, setTransformType] =
-    useState<TransformType>('shorts_script');
-  const [tone, setTone] = useState<ToneType>('viral');
+  const [platform, setPlatform] = useState<PlatformType>('instagram');
+  const [transformType, setTransformType] = useState<TransformType>('caption');
+  const [tone, setTone] = useState<ToneType>('professional');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleGenerate() {
+  async function handleGenerate() {
     if (!title.trim()) {
       setError(t('createForm.validationTitle'));
       return;
@@ -45,21 +48,35 @@ export default function CreatePage() {
     }
 
     setError('');
+    setIsLoading(true);
 
-    const draft: ProjectDraft = {
-      title: title.trim(),
-      rawInput: rawInput.trim(),
-      platformTarget,
-      transformType,
-      tone,
-    };
+    try {
+      const draft: GenerateRequest = {
+        title: title.trim(),
+        rawInput: rawInput.trim(),
+        platform,
+        transformType,
+        tone,
+      };
 
-    const outputs = generateMockOutputs(draft);
+      const generated = await generateContent(draft);
+      console.log('GENERATED RESPONSE', generated);
 
-    setCurrentDraft(draft);
-    setGeneratedOutputs(outputs);
+      setCurrentDraft(draft);
+      addGeneratedOutput(generated);
+      console.log('GENERATE PAYLOAD', draft);
 
-    router.push('/workspace');
+      router.push('/workspace');
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : t('common.somethingWentWrong');
+
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -98,8 +115,8 @@ export default function CreatePage() {
       <SelectionGroup
         title={t('createForm.platform')}
         options={PLATFORM_OPTIONS}
-        selectedValue={platformTarget}
-        onSelect={(value) => setPlatformTarget(value as PlatformTarget)}
+        selectedValue={platform}
+        onSelect={(value) => setPlatform(value as PlatformType)}
       />
 
       <SelectionGroup
@@ -118,8 +135,14 @@ export default function CreatePage() {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Pressable style={styles.button} onPress={handleGenerate}>
-        <Text style={styles.buttonText}>{t('createForm.generate')}</Text>
+      <Pressable
+        style={[styles.button, isLoading && styles.buttonDisabled]}
+        onPress={handleGenerate}
+        disabled={isLoading}
+      >
+        <Text style={styles.buttonText}>
+          {isLoading ? 'Generating...' : t('createForm.generate')}
+        </Text>
       </Pressable>
     </ScrollView>
   );
@@ -248,6 +271,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: '#FFFFFF',

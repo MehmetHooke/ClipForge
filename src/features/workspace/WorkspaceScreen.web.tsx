@@ -1,11 +1,68 @@
+import OutputCard from '@/src/components/output/OutputCard';
+import { generateContent } from '@/src/services/api/generate';
+import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { useProject } from '../../store/project.context';
 
 export default function WorkspaceScreen() {
   const { t } = useTranslation();
-  const { currentDraft, generatedOutputs } = useProject();
+
+  const { currentDraft, setCurrentDraft, generatedOutputs, replaceGeneratedOutput } = useProject();
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const router = useRouter();
+
+
+  const handleUseAsDraft = (text: string) => {
+    if (!currentDraft) return;
+
+    const updatedDraft = {
+      ...currentDraft,
+      rawInput: text,
+    };
+
+    setCurrentDraft(updatedDraft);
+
+    router.push('/(app)/create'); // senin route'una göre değişebilir
+  };
+
+  const handleCopy = async (text: string) => {
+    try {
+      await Clipboard.setStringAsync(text);
+      Alert.alert('Copied', 'Output copied to clipboard.');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy output.');
+    }
+  };
+  const handleRegenerate = async (outputId: string) => {
+    if (!currentDraft) {
+      Alert.alert('Error', 'Draft data not found.');
+      return;
+    }
+
+    try {
+      setRegeneratingId(outputId);
+
+      const regeneratedOutput = await generateContent(currentDraft);
+
+      replaceGeneratedOutput(outputId, {
+        ...regeneratedOutput,
+        id: outputId,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to regenerate output.';
+      Alert.alert('Error', message);
+    } finally {
+      setRegeneratingId(null);
+    }
+
+
+  };
+
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -35,46 +92,35 @@ export default function WorkspaceScreen() {
           <Text style={styles.value}>Henüz output yok.</Text>
         </View>
       ) : (
-        generatedOutputs.map((output) => (
-          <View key={output.id} style={styles.card}>
-            {!!output.result.title && (
-              <>
-                <Text style={styles.label}>Title</Text>
-                <Text style={styles.cardTitle}>{output.result.title}</Text>
-              </>
-            )}
+        generatedOutputs.map((output) => {
+          const contentParts = [
+            output.result.hook ? `Hook:\n${output.result.hook}` : null,
+            output.result.body ? `Body:\n${output.result.body}` : null,
+            output.result.cta ? `CTA:\n${output.result.cta}` : null,
+            output.result.hashtags?.length
+              ? `Hashtags:\n${output.result.hashtags.join(' ')}`
+              : null,
+          ].filter(Boolean) as string[];
 
-            {!!output.result.hook && (
-              <>
-                <Text style={styles.label}>Hook</Text>
-                <Text style={styles.cardContent}>{output.result.hook}</Text>
-              </>
-            )}
+          const combinedContent = [
+            output.result.title ? output.result.title : null,
+            contentParts.join('\n\n'),
+          ]
+            .filter(Boolean)
+            .join('\n\n');
 
-            <Text style={styles.label}>Body</Text>
-            <Text style={styles.cardContent}>{output.result.body}</Text>
-
-            {!!output.result.cta && (
-              <>
-                <Text style={styles.label}>CTA</Text>
-                <Text style={styles.cardContent}>{output.result.cta}</Text>
-              </>
-            )}
-
-            {!!output.result.hashtags?.length && (
-              <>
-                <Text style={styles.label}>Hashtags</Text>
-                <Text style={styles.cardContent}>
-                  {output.result.hashtags.join(' ')}
-                </Text>
-              </>
-            )}
-
-            <Text style={styles.metaText}>
-              {new Date(output.createdAt).toLocaleString()}
-            </Text>
-          </View>
-        ))
+          return (
+            <OutputCard
+              key={output.id}
+              title={output.result.title || 'Generated Output'}
+              content={combinedContent}
+              isLoading={regeneratingId === output.id}
+              onCopy={() => handleCopy(combinedContent)}
+              onRegenerate={() => handleRegenerate(output.id)}
+              onUseAsDraft={() => handleUseAsDraft(combinedContent)}
+            />
+          );
+        })
       )}
     </ScrollView>
   );

@@ -9,6 +9,7 @@ type ProjectContextType = {
   setCurrentDraft: (draft: ProjectDraft | null) => void;
   setGeneratedOutputs: (outputs: GeneratedOutput[]) => void;
   addGeneratedOutput: (output: GeneratedOutput) => void;
+  replaceGeneratedOutput: (outputId: string, updatedOutput: GeneratedOutput) => void;
   clearProjectState: () => void;
   latestOutput: GeneratedOutput | null;
 };
@@ -21,6 +22,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const addGeneratedOutput = (output: GeneratedOutput) => {
     setGeneratedOutputs((prev) => [output, ...prev]);
+  };
+
+  const replaceGeneratedOutput = (outputId: string, updatedOutput: GeneratedOutput) => {
+    setGeneratedOutputs((prev) =>
+      prev.map((item) => (item.id === outputId ? updatedOutput : item))
+    );
   };
 
   const clearProjectState = () => {
@@ -37,6 +44,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       setCurrentDraft,
       setGeneratedOutputs,
       addGeneratedOutput,
+      replaceGeneratedOutput,
       clearProjectState,
       latestOutput,
     }),

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Pressable,
@@ -27,6 +27,7 @@ import {
 export default function CreatePage() {
   const { t } = useTranslation();
   const { setCurrentDraft, addGeneratedOutput } = useProject();
+  const { currentDraft } = useProject();
 
   const [title, setTitle] = useState('');
   const [rawInput, setRawInput] = useState('');
@@ -35,6 +36,16 @@ export default function CreatePage() {
   const [tone, setTone] = useState<ToneType>('professional');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+  if (!currentDraft) return;
+
+  setTitle(currentDraft.title ?? '');
+  setRawInput(currentDraft.rawInput ?? '');
+  setPlatform(currentDraft.platform);
+  setTransformType(currentDraft.transformType);
+  setTone(currentDraft.tone);
+}, [currentDraft]);
 
   async function handleGenerate() {
     if (!title.trim()) {
